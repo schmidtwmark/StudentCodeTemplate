@@ -21,6 +21,7 @@ class Console: ObservableObject {
         var content: LineContent
     }
     
+    var setFocus: ((Bool) -> Void)? = nil
     
     @Published var lines: Deque<Line> = Deque()
 //    @Published var lines: [Line] = []
@@ -35,7 +36,7 @@ class Console: ObservableObject {
         lines.append(line)
     }
 
-    func print(_ line: String) async {
+    func write(_ line: String) {
         append(Line(content: .output(line)))
 //        try? await Task.sleep(for: .milliseconds(100))
     }
@@ -44,6 +45,7 @@ class Console: ObservableObject {
     func read(_ prompt: String) async -> String {
         append(Line(content: .output(prompt)))
         append(Line(content: .input))
+        setFocus?(true)
         
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
@@ -73,15 +75,26 @@ class Console: ObservableObject {
     }
 }
 
+let CORNER_RADIUS = 8.0
 
 struct ContentView: View {
     
-    @StateObject var console: Console = Console()
+    @StateObject var console = Console()
     @State var task: Task<Void, Never>? = nil
+    @FocusState private var isTextFieldFocused: Bool
+
     
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Console")
+                    .padding()
+                    .background(Color(uiColor: .secondarySystemBackground))
+                    .clipShape(.rect(topLeadingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
+                Spacer()
+            }
+            Divider()
             ScrollView {
                 HStack {
                     LazyVStack (alignment: .leading) {
@@ -92,10 +105,10 @@ struct ContentView: View {
                                     .frame(width: .infinity)
                             case .input:
                                 TextField("", text: $console.userInput)
-                                    .border(.red)
                                     .onSubmit {
                                         console.submitInput(true)
                                     }
+                                    .focused($isTextFieldFocused)
                             }
                         }
                     }
@@ -105,9 +118,9 @@ struct ContentView: View {
             }
             .defaultScrollAnchor(.bottom)
             .background(Color(uiColor: .secondarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 8.0))
-            .font(.system(.body, design: .monospaced))
+            .clipShape(.rect(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
             .scrollIndicators(.visible)
+            Spacer(minLength: CORNER_RADIUS)
             HStack {
                 Button {
                     if let task = task {
@@ -149,7 +162,13 @@ struct ContentView: View {
             }
             
         }
+        .font(.system(.body, design: .monospaced))
         .padding()
+        .task {
+            console.setFocus = { focus in
+                isTextFieldFocused = focus
+            }
+        }
     }
 }
 
