@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EDF8B49A2CE6EA5C009BF4B6 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = EDF8B4992CE6EA5C009BF4B6 /* Collections */; };
+		EDF8B49C2CE6EA5C009BF4B6 /* DequeModule in Frameworks */ = {isa = PBXBuildFile; productRef = EDF8B49B2CE6EA5C009BF4B6 /* DequeModule */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		EDF8B47A2CE68044009BF4B6 /* StudentCodeTemplate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StudentCodeTemplate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +28,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EDF8B49A2CE6EA5C009BF4B6 /* Collections in Frameworks */,
+				EDF8B49C2CE6EA5C009BF4B6 /* DequeModule in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +72,8 @@
 			);
 			name = StudentCodeTemplate;
 			packageProductDependencies = (
+				EDF8B4992CE6EA5C009BF4B6 /* Collections */,
+				EDF8B49B2CE6EA5C009BF4B6 /* DequeModule */,
 			);
 			productName = StudentCodeTemplate;
 			productReference = EDF8B47A2CE68044009BF4B6 /* StudentCodeTemplate.app */;
@@ -94,6 +103,9 @@
 			);
 			mainGroup = EDF8B4712CE68044009BF4B6;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EDF8B4982CE6EA5C009BF4B6 /* XCRemoteSwiftPackageReference "swift-collections" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EDF8B47B2CE68044009BF4B6 /* Products */;
 			projectDirPath = "";
@@ -324,6 +336,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EDF8B4982CE6EA5C009BF4B6 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EDF8B4992CE6EA5C009BF4B6 /* Collections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EDF8B4982CE6EA5C009BF4B6 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = Collections;
+		};
+		EDF8B49B2CE6EA5C009BF4B6 /* DequeModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EDF8B4982CE6EA5C009BF4B6 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = DequeModule;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EDF8B4722CE68044009BF4B6 /* Project object */;
 }
