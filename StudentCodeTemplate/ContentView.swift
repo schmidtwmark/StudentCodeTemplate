@@ -10,6 +10,7 @@ import Combine
 import DequeModule
 
 let MAX_LINES = 100
+@MainActor
 class Console: ObservableObject {
     struct Line : Identifiable {
         
@@ -26,25 +27,30 @@ class Console: ObservableObject {
     @Published var lines: Deque<Line> = Deque()
 //    @Published var lines: [Line] = []
     @Published var userInput = ""
+    @Published var running = false
     
     private var continuation: CheckedContinuation<String?, Never>?
     
-    private func append(_ line: Line) {
-        if lines.count >= MAX_LINES {
-            lines.removeFirst()
+    private func append(_ line: Line) throws {
+        if running {
+            if lines.count >= MAX_LINES {
+                lines.removeFirst()
+            }
+            lines.append(line)
+        } else {
+            throw CancellationError()
         }
-        lines.append(line)
     }
 
-    func write(_ line: String) {
-        append(Line(content: .output(line)))
+    func write(_ line: String) throws {
+        try append(Line(content: .output(line)))
 //        try? await Task.sleep(for: .milliseconds(100))
     }
     
     
-    func read(_ prompt: String) async -> String {
-        append(Line(content: .output(prompt)))
-        append(Line(content: .input))
+    func read(_ prompt: String) async throws -> String {
+        try append(Line(content: .output(prompt)))
+        try append(Line(content: .input))
         setFocus?(true)
         
         return await withCheckedContinuation { continuation in
@@ -65,11 +71,13 @@ class Console: ObservableObject {
     }
     
     func stop() {
+        running = false
         submitInput(false)
     }
     
     func clear() {
         lines = []
+        running = false
         userInput = ""
         continuation = nil
     }
@@ -132,7 +140,8 @@ struct ContentView: View {
                     } else {
                         console.clear()
                         self.task = Task {
-                            await main(console: console)
+                            console.running = true
+                            try? await main(console: console)
                             withAnimation {
                                 self.task = nil
                             }
