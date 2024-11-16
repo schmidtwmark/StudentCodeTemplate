@@ -1,6 +1,15 @@
 {
-  "originHash" : "51f90653b2c9f9f7064c0d52159b40bf7d222e5f314be23e62fe28520fec03db",
+  "originHash" : "dcf21f1264e13376830a3878b73d95ebf18a12292f6887f9fba3cbc7773b9aa5",
   "pins" : [
+    {
+      "identity" : "studentcodemacros",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/schmidtwmark/StudentCodeMacros.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "d48f92e3fc8f77a76716d8fdfc3a4eaa2ac864c7"
+      }
+    },
     {
       "identity" : "swift-collections",
       "kind" : "remoteSourceControl",
@@ -8,6 +17,15 @@
       "state" : {
         "revision" : "671108c96644956dddcd89dd59c203dcdb36cec7",
         "version" : "1.1.4"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "0687f71944021d616d34d922343dcef086855920",
+        "version" : "600.0.1"
       }
     }
   ],

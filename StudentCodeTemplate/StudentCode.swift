@@ -1,22 +1,15 @@
-//
-//  StudentCode.swift
-//  StudentCodeTemplate
-//
-//  Created by Mark Schmidt on 11/14/24.
-//
-
 func main(console: Console) async throws {
+//    try await console.write("Hello, World!\nThis is multi line text")
+    
+//    var output = ColoredString()
+//    output += ColoredString("Hello", .green)
+//    output += ColoredString(", World!", .red)
+//    try await console.write(output)
+    
     let input = try await console.read("Enter a number")
-    let num = Int(input) ?? 10
+    let num = Int(input) ?? 0
     for i in 0...num {
+        
         try await console.write("\(i) iteration")
     }
-//    console.print("You are in a cave do you go left or right")
-//    let input = await console.read("Enter your choice: ")
-//    if input == "left" {
-//        console.write("argh you die")
-//    } else {
-//        console.write("you win!")
-//    }
-
 }
