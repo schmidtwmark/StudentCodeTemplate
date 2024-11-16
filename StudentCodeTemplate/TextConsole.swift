@@ -10,8 +10,10 @@ import Combine
 import DequeModule
 
 let MAX_LINES = 100
+
 @MainActor
-class TextConsole: ObservableObject {
+class TextConsole: @preconcurrency Console {
+    
     struct Line : Identifiable {
         
         enum LineContent {
@@ -22,39 +24,8 @@ class TextConsole: ObservableObject {
         var content: LineContent
     }
     
-    enum RunState {
-        case idle
-        case running
-        case success
-        case cancel
-        case failed
+    nonisolated required init() {
         
-        var displayString: String {
-            switch self {
-            case .running: return "Running for "
-            case .idle: return "Idle for "
-            case .success: return "Success in "
-            case .cancel: return "Canceled in "
-            case .failed: return "Failed in "
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .running, .idle: return .gray
-            case .success: return .green
-            case .failed: return .red
-            case .cancel: return .yellow
-           }
-        }
-        
-        var icon: String {
-            switch self {
-            case .running, .idle: return "circle"
-            case .success: return "checkmark.circle.fill"
-            case .failed, .cancel: return "xmark.circle.fill"
-            }
-        }
     }
     
     var setFocus: ((Bool) -> Void)? = nil
@@ -150,21 +121,22 @@ class TextConsole: ObservableObject {
         continuation = nil
     }
     
-    static func timeDisplay(_ start: Date, _ end: Date) -> String{
-        
-        let interval = end.timeIntervalSince(start)
-        if interval < 1 {
-            return String(format: "%.0fms", interval * 1000)
-        } else {
-            return String(format: "%.2fs", interval)
-        }
-    }
     
     var durationString: String {
         if let startTime = startTime,
            let endTime = endTime {
-            return TextConsole.timeDisplay(startTime, endTime)
+            return timeDisplay(startTime, endTime)
         }
         return timeString
+    }
+    
+    func tick() {
+        if let start = startTime {
+            timeString = timeDisplay(start, Date())
+        }
+    }
+    
+    var disableClear: Bool {
+        lines.isEmpty
     }
 }

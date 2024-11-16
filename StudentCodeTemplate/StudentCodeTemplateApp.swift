@@ -11,7 +11,7 @@ import SwiftUI
 struct StudentCodeTemplateApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView<TextConsole, TextConsoleView>()
         }
     }
 }

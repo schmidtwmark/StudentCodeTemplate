@@ -11,7 +11,15 @@ import Combine
 
 let CORNER_RADIUS = 8.0
 
-struct ConsoleView: View {
+protocol ConsoleView: View {
+    init(console: any Console)
+}
+
+struct TextConsoleView: ConsoleView {
+    init(console: any Console) {
+        self.console = console as! TextConsole
+    }
+    
     
     @ObservedObject var console: TextConsole
     @FocusState private var isTextFieldFocused: Bool
@@ -51,9 +59,9 @@ struct ConsoleView: View {
     
 }
 
-struct ContentView: View {
+struct ContentView<C: Console, CV: ConsoleView>: View {
     
-    @StateObject var console = TextConsole()
+    @StateObject var console = C()
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
 
     
@@ -81,7 +89,7 @@ struct ContentView: View {
                 Spacer()
             }
             Divider()
-            ConsoleView(console: console)
+            CV(console: console)
             Spacer(minLength: CORNER_RADIUS)
             HStack {
                 Button {
@@ -116,16 +124,14 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity)
                             .fontWeight(.heavy)
                     }
-                    .disabled(console.lines.isEmpty)
+                    .disabled(console.disableClear)
                     .frame(maxWidth: .infinity)
                 }
             }
             
         }
         .onReceive(timer) { _ in
-            if let start = console.startTime {
-                console.timeString = TextConsole.timeDisplay(start, Date())
-            }
+            console.tick()
         }
         .font(.system(.body, design: .monospaced))
         .padding()
@@ -133,5 +139,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView<TextConsole, TextConsoleView>()
 }
