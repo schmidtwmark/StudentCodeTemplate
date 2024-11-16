@@ -11,10 +11,49 @@ import Combine
 
 let CORNER_RADIUS = 8.0
 
+struct ConsoleView: View {
+    
+    @ObservedObject var console: TextConsole
+    @FocusState private var isTextFieldFocused: Bool
+
+    var body: some View {
+        ScrollView {
+            HStack {
+                LazyVStack (alignment: .leading) {
+                    ForEach(console.lines) { line in
+                        switch line.content {
+                        case .output(let text):
+                            Text(text)
+                                .frame(width: .infinity)
+                        case .input:
+                            TextField("", text: $console.userInput)
+                                .onSubmit {
+                                    console.submitInput(true)
+                                }
+                                .focused($isTextFieldFocused)
+                        }
+                    }
+                }
+                Spacer()
+            }
+            .padding()
+        }
+        .defaultScrollAnchor(.bottom)
+        .background(Color(uiColor: .secondarySystemBackground))
+        .clipShape(.rect(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
+        .scrollIndicators(.visible)
+        .task {
+            console.setFocus = { focus in
+                isTextFieldFocused = focus
+            }
+        }
+    }
+    
+}
+
 struct ContentView: View {
     
-    @StateObject var console = Console()
-    @FocusState private var isTextFieldFocused: Bool
+    @StateObject var console = TextConsole()
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
 
     
@@ -42,31 +81,7 @@ struct ContentView: View {
                 Spacer()
             }
             Divider()
-            ScrollView {
-                HStack {
-                    LazyVStack (alignment: .leading) {
-                        ForEach(console.lines) { line in
-                            switch line.content {
-                            case .output(let text):
-                                Text(text)
-                                    .frame(width: .infinity)
-                            case .input:
-                                TextField("", text: $console.userInput)
-                                    .onSubmit {
-                                        console.submitInput(true)
-                                    }
-                                    .focused($isTextFieldFocused)
-                            }
-                        }
-                    }
-                    Spacer()
-                }
-                .padding()
-            }
-            .defaultScrollAnchor(.bottom)
-            .background(Color(uiColor: .secondarySystemBackground))
-            .clipShape(.rect(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
-            .scrollIndicators(.visible)
+            ConsoleView(console: console)
             Spacer(minLength: CORNER_RADIUS)
             HStack {
                 Button {
@@ -109,16 +124,11 @@ struct ContentView: View {
         }
         .onReceive(timer) { _ in
             if let start = console.startTime {
-                console.timeString = Console.timeDisplay(start, Date())
+                console.timeString = TextConsole.timeDisplay(start, Date())
             }
         }
         .font(.system(.body, design: .monospaced))
         .padding()
-        .task {
-            console.setFocus = { focus in
-                isTextFieldFocused = focus
-            }
-        }
     }
 }
 

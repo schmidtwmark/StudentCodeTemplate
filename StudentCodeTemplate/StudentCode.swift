@@ -1,4 +1,4 @@
-func main(console: Console) async throws {
+func main(console: TextConsole) async throws {
 //    try await console.write("Hello, World!\nThis is multi line text")
     
 //    var output = ColoredString()

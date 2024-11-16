@@ -11,7 +11,7 @@ import DequeModule
 
 let MAX_LINES = 100
 @MainActor
-class Console: ObservableObject {
+class TextConsole: ObservableObject {
     struct Line : Identifiable {
         
         enum LineContent {
@@ -163,7 +163,7 @@ class Console: ObservableObject {
     var durationString: String {
         if let startTime = startTime,
            let endTime = endTime {
-            return Console.timeDisplay(startTime, endTime)
+            return TextConsole.timeDisplay(startTime, endTime)
         }
         return timeString
     }
