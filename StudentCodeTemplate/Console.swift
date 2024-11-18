@@ -51,15 +51,11 @@ enum RunState {
         }
     }
 }
+
+@MainActor
 protocol Console : ObservableObject {
     
-    init()
-    
-    func write(_ line: String) async throws
-    
-    func write(_ colored: ColoredString) async throws
-    
-    func read(_ prompt: String) async throws -> String
+    init(colorScheme: ColorScheme)
     
     func tick()
     
@@ -74,4 +70,77 @@ protocol Console : ObservableObject {
     func clear()
     
     var disableClear: Bool { get }
+    
+    var title: String { get }
+}
+
+@MainActor
+class BaseConsole<C: Console> {
+    @Published var state: RunState = .idle
+    @Published var startTime : Date? = nil
+    @Published var endTime : Date? = nil
+    @Published var timeString = ""
+    @Published var task: Task<Void, Never>? = nil
+    
+    var mainFunction: (_ console: C) async throws -> Void
+    
+    init(mainFunction: @escaping (_ console: C) async throws -> Void) {
+        self.mainFunction = mainFunction
+    }
+    
+    var durationString: String {
+        if let startTime = startTime,
+           let endTime = endTime {
+            return timeDisplay(startTime, endTime)
+        }
+        return timeString
+    }
+    
+    func tick() {
+        if let start = startTime {
+            timeString = timeDisplay(start, Date())
+        }
+    }
+    
+    func finish(_ newState: RunState) {
+        state = newState
+        task = nil
+        endTime = Date()
+
+    }
+    
+    func stop() {
+        task?.cancel()
+        finish(.cancel)
+    }
+    
+    func clear() {
+        startTime = nil
+        endTime = nil
+        state = .idle
+    }
+    
+    func start() {
+        state = .running
+        startTime = Date()
+        self.task = Task {
+            do {
+                try await mainFunction(self as! C)
+                withAnimation {
+                    finish(.success)
+                }
+            } catch is CancellationError {
+                // No need to do this here -- gets set on Stop
+            } catch {
+                withAnimation {
+                    finish(.failed)
+                }
+            }
+        }
+    }
+
+}
+
+protocol ConsoleView: View {
+    init(console: any Console)
 }

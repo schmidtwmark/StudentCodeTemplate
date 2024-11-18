@@ -11,64 +11,27 @@ import Combine
 
 let CORNER_RADIUS = 8.0
 
-protocol ConsoleView: View {
-    init(console: any Console)
-}
-
-struct TextConsoleView: ConsoleView {
-    init(console: any Console) {
-        self.console = console as! TextConsole
-    }
-    
-    
-    @ObservedObject var console: TextConsole
-    @FocusState private var isTextFieldFocused: Bool
-
-    var body: some View {
-        ScrollView {
-            HStack {
-                LazyVStack (alignment: .leading) {
-                    ForEach(console.lines) { line in
-                        switch line.content {
-                        case .output(let text):
-                            Text(text)
-                                .frame(width: .infinity)
-                        case .input:
-                            TextField("", text: $console.userInput)
-                                .onSubmit {
-                                    console.submitInput(true)
-                                }
-                                .focused($isTextFieldFocused)
-                        }
-                    }
-                }
-                Spacer()
-            }
-            .padding()
-        }
-        .defaultScrollAnchor(.bottom)
-        .background(Color(uiColor: .secondarySystemBackground))
-        .clipShape(.rect(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
-        .scrollIndicators(.visible)
-        .task {
-            console.setFocus = { focus in
-                isTextFieldFocused = focus
-            }
-        }
-    }
-    
-}
-
 struct ContentView<C: Console, CV: ConsoleView>: View {
     
-    @StateObject var console = C()
+    @Environment(\.colorScheme) var colorScheme
+    var body: some View {
+        InnerContentView<C, CV>(colorScheme: colorScheme)
+    }
+}
+struct InnerContentView<C: Console, CV: ConsoleView>: View {
+    
+    @StateObject var console: C
+    init(colorScheme: ColorScheme) {
+        let c = C(colorScheme: colorScheme)
+        _console = StateObject(wrappedValue: c)
+    }
     let timer = Timer.publish(every: 0.01, on: .main, in: .common).autoconnect()
 
     
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Console")
+                Text(console.title)
                     .padding()
                     .background(Color(uiColor: .secondarySystemBackground))
                     .clipShape(.rect(topLeadingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
@@ -90,6 +53,8 @@ struct ContentView<C: Console, CV: ConsoleView>: View {
             }
             Divider()
             CV(console: console)
+                .background(Color(uiColor: .secondarySystemBackground))
+                .clipShape(.rect(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
             Spacer(minLength: CORNER_RADIUS)
             HStack {
                 Button {
@@ -136,8 +101,4 @@ struct ContentView<C: Console, CV: ConsoleView>: View {
         .font(.system(.body, design: .monospaced))
         .padding()
     }
-}
-
-#Preview {
-    ContentView<TextConsole, TextConsoleView>()
 }
