@@ -92,12 +92,68 @@ class TurtleScene: SKScene {
     
     var rotationSpeed = ROTATION_SPEED_0
     var movementSpeed = MOVEMENT_SPEED_0
-
+    var cameraNode: SKCameraNode? // Reference for the camera
+    
+    private func setupCamera() {
+        let camera = SKCameraNode()
+        self.cameraNode = camera
+        self.camera = camera
+        addChild(camera)
+    }
     override func didMove(to view: SKView) {
+        setupCamera()
+        
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+            view.addGestureRecognizer(panGesture)
+            
+        // Add pinch gesture recognizer
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+        view.addGestureRecognizer(pinchGesture)
+    }
+    
+    @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
+        print("Handle pan")
+        guard let cameraNode = self.cameraNode else { return }
+        
+        let translation = sender.translation(in: self.view)
+        let sceneTranslation = CGPoint(x: translation.x, y: -translation.y) // Invert Y because SpriteKit's coordinate system is flipped.
+        
+        cameraNode.position = CGPoint(
+            x: cameraNode.position.x - sceneTranslation.x,
+            y: cameraNode.position.y - sceneTranslation.y
+        )
+
+        sender.setTranslation(.zero, in: self.view) // Reset translation to avoid compounding
+    }
+    
+    @objc func handlePinchGesture(_ sender: UIPinchGestureRecognizer) {
+        guard let cameraNode = self.cameraNode else { return }
+        
+        if sender.state == .changed {
+            let zoomFactor = sender.scale
+            let newScale = cameraNode.xScale / zoomFactor // In SpriteKit, smaller scale zooms in
+            
+            // Clamp the scale to prevent over-zooming
+            let minScale: CGFloat = 0.5
+            let maxScale: CGFloat = 5.0
+            cameraNode.setScale(max(min(newScale, maxScale), minScale))
+            
+            sender.scale = 1.0 // Reset scale to avoid compounding
+        }
+    }
+    
+    func clampCameraPosition() {
+        guard let cameraNode = self.cameraNode else { return }
+        
+        let xRange = SKRange(lowerLimit: 0, upperLimit: self.size.width)
+        let yRange = SKRange(lowerLimit: 0, upperLimit: self.size.height)
+        
+        cameraNode.position.x = max(min(cameraNode.position.x, xRange.upperLimit), xRange.lowerLimit)
+        cameraNode.position.y = max(min(cameraNode.position.y, yRange.upperLimit), yRange.lowerLimit)
     }
     
     override func update(_ currentTime: TimeInterval) {
-        print("Calling update")
+        clampCameraPosition()
        for node in children {
            if let turtle = node as? Turtle {
                turtle.update()
