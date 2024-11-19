@@ -20,52 +20,103 @@ extension SKSpriteNode {
 
 class Turtle: SKSpriteNode {
     private var rotation: CGFloat = 0
+
     private enum PenState {
         case up
-        case down
+        case down(CGMutablePath, SKShapeNode)
     }
+    private var penState: PenState = .up
     
     init() {
-        // Create a texture using SF Symbol
-        let turtleImage = UIImage(systemName: "tortoise.fill")!.withTintColor(.red, renderingMode: .alwaysTemplate)
-        let texture = SKTexture(image: turtleImage)
-        super.init(texture: texture, color: .red, size: CGSize(width: 40.0, height: 40.0))
-    
-        self.color = .red
-        self.colorBlendFactor = 0.5
-        self.position = CGPoint(x: size.width / 2, y: size.height / 2)
-//        self.position = CGPoint(x: 100, y: 100)
-
+        let texture = SKTexture(imageNamed: "tortoise.fill@2x")
+        super.init(texture: texture, color: .green, size: CGSize(width: 40.0, height: 40.0))
+        self.colorBlendFactor = 1.0
+        self.zPosition = 1
     }
     
     required init?(coder aDecoder: NSCoder) {
-        return nil
+        fatalError("init(coder:) has not been implemented")
     }
     
     func forward(_ distance: CGFloat) async {
         let dx = distance * cos(rotation)
         let dy = distance * sin(rotation)
-        let moveAction = SKAction.moveBy(x: dx, y: dy, duration: 0.5)
+        let moveAction = SKAction.moveBy(x: dx, y: dy, duration: distance / MOVEMENT_SPEED_0)
         await self.runAsync(moveAction)
+    }
+    
+    func backward(_ distance: CGFloat) async {
+        await forward(-distance)
     }
 
     func rotate(_ angle: CGFloat) async {
         rotation += angle * .pi / 180
-        let rotateAction = SKAction.rotate(byAngle: angle * .pi / 180, duration: 0.5)
+        let rotateAction = SKAction.rotate(byAngle: angle * .pi / 180, duration: abs(angle / ROTATION_SPEED_0))
         await self.runAsync(rotateAction)
+    }
+    
+    func setColor(_ color: UIColor)  {
+        self.color = color
+        if case .down(_, _) = penState {
+            // Call penDown again so the next section has the right color
+            penDown()
+        }
+    }
+    
+    func penDown() {
+        let path = CGMutablePath()
+        path.move(to: self.position)
+        let pathNode = SKShapeNode()
+        pathNode.strokeColor = self.color
+        pathNode.lineWidth = 3
+        scene?.addChild(pathNode)
+        penState = .down(path, pathNode)
+    }
+    
+    func update() {
+        if case .down(let path, let pathNode) = penState {
+            path.addLine(to: self.position)
+            pathNode.path = path
+        }
+    }
+    
+    func penUp() {
+        penState = .up
     }
 }
 
+let ROTATION_SPEED_0 = 90.0 // degrees / second
+let MOVEMENT_SPEED_0 = 200.0 // points / second
+
 class TurtleScene: SKScene {
+    
+    var rotationSpeed = ROTATION_SPEED_0
+    var movementSpeed = MOVEMENT_SPEED_0
 
     override func didMove(to view: SKView) {
-        backgroundColor = .white
+    }
+    
+    override func update(_ currentTime: TimeInterval) {
+        print("Calling update")
+       for node in children {
+           if let turtle = node as? Turtle {
+               turtle.update()
+           }
+            
+        }
     }
 
+}
+
+extension CGSize {
+    var midpoint : CGPoint {
+        CGPoint(x: width / 2, y: height / 2)
+    }
 }
 
 @MainActor
 class TurtleConsole: BaseConsole<TurtleConsole>, Console {
+    
     
     func updateBackground(_ colorScheme: ColorScheme) {
         scene.backgroundColor = colorScheme == .light ?
@@ -74,7 +125,7 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     
     required init(colorScheme: ColorScheme) {
         super.init(mainFunction: turtleMain)
-        self.scene = SKScene()
+        self.scene = TurtleScene()
         scene.size = CGSize(width: 300, height: 300)
         scene.scaleMode = .resizeFill
         updateBackground(colorScheme)
@@ -89,6 +140,7 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     
     func addTurtle() async throws -> Turtle {
         let turtle = Turtle()
+        turtle.position = scene.size.midpoint
         scene.addChild(turtle)
         return turtle
     }
