@@ -18,6 +18,12 @@ extension SKSpriteNode {
     }
 }
 
+extension CGFloat {
+    var radians: CGFloat {
+        return self * .pi / 180
+    }
+}
+
 class Turtle: SKSpriteNode {
     private var rotation: CGFloat = 0
 
@@ -48,10 +54,31 @@ class Turtle: SKSpriteNode {
     func backward(_ distance: CGFloat) async {
         await forward(-distance)
     }
+    
+    // Trace the path of an arc with a certain radius for @param angle degrees
+    // This should both move and rotate the turtle so it is always facing tangent to the circle.
+    func arc(radius: CGFloat, angle: CGFloat) async {
+        print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
+        let center = CGPoint(x: position.x + sin(rotation) * radius, y: position.y + cos(rotation) * radius)
+        print("Center is: \(center)")
+        let startOffset: CGFloat = 270.0
+        let path = CGMutablePath()
+        path.move(to: position)
+        path.addRelativeArc(center: center, radius: radius, startAngle: startOffset.radians + rotation, delta: angle.radians)
+        
+        let circumference = abs(2 * .pi * radius * angle / 360)
+        let duration = circumference / MOVEMENT_SPEED_0
+        rotation += angle.radians
+        let rotateAction = SKAction.rotate(byAngle: angle.radians, duration: duration)
+        let followAction = SKAction.follow(path, asOffset: false, orientToPath: false, duration: duration)
+        let group = SKAction.group([rotateAction, followAction])
+        
+        await self.runAsync(group)
+    }
 
-    func rotate(_ angle: CGFloat) async {
-        rotation += angle * .pi / 180
-        let rotateAction = SKAction.rotate(byAngle: angle * .pi / 180, duration: abs(angle / ROTATION_SPEED_0))
+   func rotate(_ angle: CGFloat) async {
+        rotation += angle.radians
+        let rotateAction = SKAction.rotate(byAngle: angle.radians, duration: abs(angle / ROTATION_SPEED_0))
         await self.runAsync(rotateAction)
     }
     
@@ -94,12 +121,13 @@ class TurtleScene: SKScene {
     var movementSpeed = MOVEMENT_SPEED_0
     var cameraNode: SKCameraNode? // Reference for the camera
     
-    private func setupCamera() {
+    func setupCamera() {
         let camera = SKCameraNode()
         self.cameraNode = camera
         self.camera = camera
         addChild(camera)
     }
+    
     override func didMove(to view: SKView) {
         setupCamera()
         
@@ -112,7 +140,6 @@ class TurtleScene: SKScene {
     }
     
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
-        print("Handle pan")
         guard let cameraNode = self.cameraNode else { return }
         
         let translation = sender.translation(in: self.view)
@@ -180,15 +207,15 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     }
     
     required init(colorScheme: ColorScheme) {
-        super.init(mainFunction: turtleMain)
         self.scene = TurtleScene()
+        super.init(mainFunction: turtleMain)
         scene.size = CGSize(width: 300, height: 300)
         scene.scaleMode = .resizeFill
         updateBackground(colorScheme)
         
     }
 
-    var scene: SKScene = SKScene()
+    var scene: TurtleScene
     
     var disableClear: Bool {
         false
@@ -196,7 +223,6 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     
     func addTurtle() async throws -> Turtle {
         let turtle = Turtle()
-        turtle.position = scene.size.midpoint
         scene.addChild(turtle)
         return turtle
     }
@@ -210,6 +236,27 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     override func clear() {
         super.clear()
         scene.removeAllChildren()
+        scene.setupCamera()
     }
     
 }
+//func arc(radius: CGFloat, angle: CGFloat) async {
+//    
+//    let path = CGMutablePath()
+//    print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
+//    let center = CGPoint(x: self.position.x + sin(rotation) * radius, y: self.position.y - cos(rotation) * radius)
+//    print("Center is: \(center)")
+//    path.move(to: self.position)
+//    
+//    path.addRelativeArc(center: center, radius: radius, startAngle: (rotation + 90).radians, delta: -angle.radians)
+//    
+//    let circumference = 2 * .pi * radius * angle / 360
+//    let duration = circumference / MOVEMENT_SPEED_0
+//    let followAction = SKAction.follow(path, duration: duration)
+//    rotation -= angle.radians
+//    let rotateAction = SKAction.rotate(byAngle: -angle.radians, duration: duration)
+////        await self.runAsync(SKAction.group([followAction, rotateAction]))
+//    await self.runAsync(followAction)
+////        await self.runAsync(rotateAction)
+//    
+//}
