@@ -59,18 +59,17 @@ class Turtle: SKSpriteNode {
     // This should both move and rotate the turtle so it is always facing tangent to the circle.
     func arc(radius: CGFloat, angle: CGFloat) async {
         print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
-        let center = CGPoint(x: position.x + sin(rotation) * radius, y: position.y + cos(rotation) * radius)
+        let center = CGPoint(x: -sin(rotation) * radius, y: cos(rotation) * radius)
         print("Center is: \(center)")
         let startOffset: CGFloat = 270.0
         let path = CGMutablePath()
-        path.move(to: position)
         path.addRelativeArc(center: center, radius: radius, startAngle: startOffset.radians + rotation, delta: angle.radians)
         
         let circumference = abs(2 * .pi * radius * angle / 360)
         let duration = circumference / MOVEMENT_SPEED_0
         rotation += angle.radians
         let rotateAction = SKAction.rotate(byAngle: angle.radians, duration: duration)
-        let followAction = SKAction.follow(path, asOffset: false, orientToPath: false, duration: duration)
+        let followAction = SKAction.follow(path, asOffset: true , orientToPath: false, duration: duration)
         let group = SKAction.group([rotateAction, followAction])
         
         await self.runAsync(group)
