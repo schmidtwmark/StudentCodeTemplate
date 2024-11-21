@@ -7,4 +7,5 @@ func turtleMain(console: TurtleConsole) async throws {
     await turtle.forward(100)
     await turtle.arc(radius: 40.0, angle: 270.0)
     await turtle.forward(100)
+    await turtle.arc(radius: 40.0, angle: -270.0)
 }
