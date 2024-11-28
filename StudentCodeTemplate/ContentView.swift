@@ -43,7 +43,7 @@ struct InnerContentView<C: Console, CV: ConsoleView>: View {
                         } else {
                             Image(systemName: console.state.icon)
                         }
-                        Text("\(console.state.displayString)\(console.durationString)")
+                        Text("\(console.state.displayString)\(!console.state.isFailure ?  console.durationString : "")")
                     }
                     .padding(5)
                     .background(console.state.color)

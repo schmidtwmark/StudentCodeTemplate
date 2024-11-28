@@ -8,16 +8,6 @@
 import SwiftUI
 import SpriteKit
 
-extension SKSpriteNode {
-    func runAsync(_ action: SKAction) async {
-        await withCheckedContinuation { continuation in
-            self.run(action) {
-                continuation.resume()
-            }
-        }
-    }
-}
-
 extension CGFloat {
     var radians: CGFloat {
         return self * .pi / 180
@@ -31,9 +21,13 @@ class Turtle: SKSpriteNode {
         case up
         case down(CGMutablePath, SKShapeNode)
     }
-    private var penState: PenState = .up
     
-    init() {
+    private var lineWidth: CGFloat = 3.0
+    private var penState: PenState = .up
+    private var console: TurtleConsole
+    
+    init(console: TurtleConsole) {
+        self.console = console
         let texture = SKTexture(imageNamed: "tortoise.fill@2x")
         super.init(texture: texture, color: .green, size: CGSize(width: 40.0, height: 40.0))
         self.colorBlendFactor = 1.0
@@ -44,20 +38,34 @@ class Turtle: SKSpriteNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func forward(_ distance: CGFloat) async {
+    func forward(_ distance: CGFloat) async throws {
         let dx = distance * cos(rotation)
         let dy = distance * sin(rotation)
         let moveAction = SKAction.moveBy(x: dx, y: dy, duration: distance / MOVEMENT_SPEED_0)
-        await self.runAsync(moveAction)
+        try await self.runAsync(moveAction)
     }
     
-    func backward(_ distance: CGFloat) async {
-        await forward(-distance)
+    func backward(_ distance: CGFloat) async throws {
+        try await forward(-distance)
     }
+    
+    func runAsync(_ action: SKAction) async throws {
+        guard console.state == .running else { throw CancellationError() }
+        await withCheckedContinuation { continuation in
+            self.run(action) {
+                continuation.resume()
+            }
+        }
+    }
+
     
     // Trace the path of an arc with a certain radius for @param angle degrees
     // This should both move and rotate the turtle so it is always facing tangent to the circle.
-    func arc(radius: CGFloat, angle: CGFloat) async {
+    // Positive angles go left, negative angles go right (from perspective of turtle)
+    func arc(radius: CGFloat, angle: CGFloat) async throws {
+        if radius <= 0 {
+            throw ConsoleError(message: "Invalid radius: \(radius)")
+        }
         print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
         
         let counterclockwise = angle >= 0
@@ -71,34 +79,34 @@ class Turtle: SKSpriteNode {
         
         let circumference = abs(2 * .pi * radius * angle / 360)
         let duration = circumference / MOVEMENT_SPEED_0
-        rotation += directionMultiplier * angle.radians
+        rotation += angle.radians
         let rotateAction = SKAction.rotate(byAngle: angle.radians, duration: duration)
         let followAction = SKAction.follow(path, asOffset: true , orientToPath: false, duration: duration)
         let group = SKAction.group([rotateAction, followAction])
         
-        await self.runAsync(group)
+        try await self.runAsync(group)
     }
 
-   func rotate(_ angle: CGFloat) async {
+   func rotate(_ angle: CGFloat) async throws {
         rotation += angle.radians
         let rotateAction = SKAction.rotate(byAngle: angle.radians, duration: abs(angle / ROTATION_SPEED_0))
-        await self.runAsync(rotateAction)
+        try await self.runAsync(rotateAction)
     }
     
-    func setColor(_ color: UIColor)  {
+    func setColor(_ color: UIColor) throws {
         self.color = color
         if case .down(_, _) = penState {
             // Call penDown again so the next section has the right color
-            penDown()
+            try penDown()
         }
     }
     
-    func penDown() {
+    func penDown() throws {
         let path = CGMutablePath()
         path.move(to: self.position)
         let pathNode = SKShapeNode()
         pathNode.strokeColor = self.color
-        pathNode.lineWidth = 3
+        pathNode.lineWidth = lineWidth
         scene?.addChild(pathNode)
         penState = .down(path, pathNode)
     }
@@ -110,8 +118,15 @@ class Turtle: SKSpriteNode {
         }
     }
     
-    func penUp() {
+    func penUp() throws {
         penState = .up
+    }
+    
+    func lineWidth(_ width: CGFloat) throws {
+        lineWidth = width
+        if case .down(_, _) = penState {
+            try penDown()
+        }
     }
 }
 
@@ -120,8 +135,6 @@ let MOVEMENT_SPEED_0 = 200.0 // points / second
 
 class TurtleScene: SKScene {
     
-    var rotationSpeed = ROTATION_SPEED_0
-    var movementSpeed = MOVEMENT_SPEED_0
     var cameraNode: SKCameraNode? // Reference for the camera
     
     func setupCamera() {
@@ -225,7 +238,7 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     }
     
     func addTurtle() async throws -> Turtle {
-        let turtle = Turtle()
+        let turtle = Turtle(console: self)
         scene.addChild(turtle)
         return turtle
     }

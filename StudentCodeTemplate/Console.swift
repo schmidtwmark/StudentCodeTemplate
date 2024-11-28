@@ -17,12 +17,13 @@ func timeDisplay(_ start: Date, _ end: Date) -> String{
     }
 }
 
-enum RunState {
+enum RunState : Equatable { 
     case idle
     case running
     case success
     case cancel
-    case failed
+    case failed(String)
+    
     
     var displayString: String {
         switch self {
@@ -30,7 +31,7 @@ enum RunState {
         case .idle: return "Idle for "
         case .success: return "Success in "
         case .cancel: return "Canceled in "
-        case .failed: return "Failed in "
+        case .failed(let message): return message
         }
     }
     
@@ -48,6 +49,13 @@ enum RunState {
         case .running, .idle: return "circle"
         case .success: return "checkmark.circle.fill"
         case .failed, .cancel: return "xmark.circle.fill"
+        }
+    }
+    
+    var isFailure: Bool {
+        switch self {
+        case .failed(_): return true
+        default:  return false
         }
     }
 }
@@ -72,6 +80,10 @@ protocol Console : ObservableObject {
     var disableClear: Bool { get }
     
     var title: String { get }
+}
+
+struct ConsoleError: Error {
+    var message: String
 }
 
 @MainActor
@@ -131,9 +143,11 @@ class BaseConsole<C: Console> {
                 }
             } catch is CancellationError {
                 // No need to do this here -- gets set on Stop
+            } catch let error as ConsoleError {
+                finish(.failed(error.message))
             } catch {
                 withAnimation {
-                    finish(.failed)
+                    finish(.failed("Unknown Error"))
                 }
             }
         }
