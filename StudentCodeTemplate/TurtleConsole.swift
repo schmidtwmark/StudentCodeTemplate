@@ -28,8 +28,8 @@ class Turtle: SKSpriteNode {
     
     init(console: TurtleConsole) {
         self.console = console
-        let texture = SKTexture(imageNamed: "tortoise.fill@2x")
-        super.init(texture: texture, color: .green, size: CGSize(width: 40.0, height: 40.0))
+        let texture = SKTexture(imageNamed: "arrow")
+        super.init(texture: texture, color: .green, size: CGSize(width: 32.0, height: 32.0))
         self.colorBlendFactor = 1.0
         self.zPosition = 1
     }
@@ -66,13 +66,11 @@ class Turtle: SKSpriteNode {
         if radius <= 0 {
             throw ConsoleError(message: "Invalid radius: \(radius)")
         }
-        print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
         
         let counterclockwise = angle >= 0
         let directionMultiplier : CGFloat = counterclockwise ? 1.0 : -1.0
         let center = CGPoint(x: -directionMultiplier * sin(rotation) * radius, y: directionMultiplier * cos(rotation) * radius)
         
-        print("Center is: \(center)")
         let startOffset: CGFloat = counterclockwise ? 270.0 : 90.0
         let path = CGMutablePath()
         path.addRelativeArc(center: center, radius: radius, startAngle: startOffset.radians + rotation, delta: angle.radians)
@@ -136,6 +134,27 @@ let MOVEMENT_SPEED_0 = 200.0 // points / second
 class TurtleScene: SKScene {
     
     var cameraNode: SKCameraNode? // Reference for the camera
+    var cameraLocked = true
+    
+    var showCameraLock: Bool {
+        getOnlyTurtle() != nil && !cameraLocked
+    }
+    
+    func getOnlyTurtle() -> Turtle? {
+        
+        var onlyTurtle: Turtle? = nil
+        
+        for node in children {
+            if let turtle = node as? Turtle {
+                if onlyTurtle == nil {
+                    onlyTurtle = turtle
+                } else {
+                    return nil
+                }
+            }
+        }
+        return onlyTurtle
+    }
     
     func setupCamera() {
         let camera = SKCameraNode()
@@ -157,6 +176,8 @@ class TurtleScene: SKScene {
     
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
         guard let cameraNode = self.cameraNode else { return }
+        
+        cameraLocked = false
         
         let translation = sender.translation(in: self.view)
         let sceneTranslation = CGPoint(x: translation.x, y: -translation.y) // Invert Y because SpriteKit's coordinate system is flipped.
@@ -188,21 +209,54 @@ class TurtleScene: SKScene {
     func clampCameraPosition() {
         guard let cameraNode = self.cameraNode else { return }
         
-        let xRange = SKRange(lowerLimit: 0, upperLimit: self.size.width)
-        let yRange = SKRange(lowerLimit: 0, upperLimit: self.size.height)
+        let xRange = SKRange(lowerLimit: -self.size.width, upperLimit: self.size.width)
+        let yRange = SKRange(lowerLimit: -self.size.height, upperLimit: self.size.height)
         
         cameraNode.position.x = max(min(cameraNode.position.x, xRange.upperLimit), xRange.lowerLimit)
         cameraNode.position.y = max(min(cameraNode.position.y, yRange.upperLimit), yRange.lowerLimit)
     }
     
+    func animateCameraToMovingTarget(target: SKNode, duration: TimeInterval = 0.5) {
+        guard let camera = self.cameraNode else { return }
+        
+        // Stop any current camera actions
+        camera.removeAllActions()
+        
+        // Create a new action to move toward the target's position
+        print("Animating to \(target.position)")
+        let moveAction = SKAction.move(to: target.position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        
+        // Run the action
+        camera.run(moveAction)
+    }
+    
+    func lockCamera() {
+        cameraLocked = true
+    }
+
+    
     override func update(_ currentTime: TimeInterval) {
-        clampCameraPosition()
+       clampCameraPosition()
        for node in children {
            if let turtle = node as? Turtle {
                turtle.update()
            }
-            
         }
+        
+        if cameraLocked {
+            guard let camera = self.cameraNode, let target = getOnlyTurtle() else { return }
+                
+            // Smoothly interpolate the camera's position toward the target's position
+            let lerpFactor: CGFloat = 0.1 // Adjust for smoother or quicker follow
+            let newPosition = CGPoint(
+                x: camera.position.x + (target.position.x - camera.position.x) * lerpFactor,
+                y: camera.position.y + (target.position.y - camera.position.y) * lerpFactor
+            )
+            
+            camera.position = newPosition
+        }
+       
     }
 
 }
@@ -225,7 +279,7 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     required init(colorScheme: ColorScheme) {
         self.scene = TurtleScene()
         super.init(mainFunction: turtleMain)
-        scene.size = CGSize(width: 300, height: 300)
+        scene.size = CGSize(width: 5000, height: 5000)
         scene.scaleMode = .resizeFill
         updateBackground(colorScheme)
         
@@ -247,6 +301,9 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     
     override func stop() {
         super.stop()
+        for child in scene.children {
+            child.removeAllActions()
+        }
     }
     
     override func clear() {

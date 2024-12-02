@@ -84,23 +84,27 @@ struct TurtleConsoleView: ConsoleView {
                         Capsule()
                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                         )
-//                    HStack {
-//                        ForEach(Speed.allCases) { speed in
-//                            Button {
-//                                withAnimation {
-//                                    console.scene.speed = speed.rawValue
-//                                }
-//                            } label: {
-//                                Label(speed.title, systemImage: speed.systemImage).labelStyle(.iconOnly)
-//                            }
-//                        }
-//                    }
-//                    .padding()
-//                    .tint(Color.primary)
-//                    .background(Color.secondary)
-//                    .clipShape(Capsule())
-//                    .padding()
+                    .padding()
                 }
+            }
+            .overlay(alignment: .topTrailing) {
+                    Button {
+                        console.scene.lockCamera()
+                    } label: {
+                        Image(systemName: "camera.fill")
+                            .font(.title2)
+                            .padding(12)
+                            .background(
+                                Color.gray.opacity(0.2)
+                            )
+                            .foregroundColor(.white)
+                            .clipShape(Capsule())
+
+                    }
+                    .padding()
+                    .opacity(console.scene.showCameraLock ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.5), value: console.scene.showCameraLock)
+                    
             }
     }
 }
