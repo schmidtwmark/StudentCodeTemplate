@@ -1,0 +1,10 @@
+import SwiftUI
+
+@main
+struct StudentCodeTemplateApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView<TurtleConsole, TurtleConsoleView>()
+        }
+    }
+}

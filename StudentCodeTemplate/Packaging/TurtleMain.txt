@@ -1,0 +1,3 @@
+func turtleMain(console: TurtleConsole) async throws {
+
+}

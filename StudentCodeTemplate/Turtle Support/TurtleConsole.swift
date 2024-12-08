@@ -313,23 +313,3 @@ class TurtleConsole: BaseConsole<TurtleConsole>, Console {
     }
     
 }
-//func arc(radius: CGFloat, angle: CGFloat) async {
-//    
-//    let path = CGMutablePath()
-//    print("Running arc, radius: \(radius), angle: \(angle), position: \(self.position), rotation: \(rotation)")
-//    let center = CGPoint(x: self.position.x + sin(rotation) * radius, y: self.position.y - cos(rotation) * radius)
-//    print("Center is: \(center)")
-//    path.move(to: self.position)
-//    
-//    path.addRelativeArc(center: center, radius: radius, startAngle: (rotation + 90).radians, delta: -angle.radians)
-//    
-//    let circumference = 2 * .pi * radius * angle / 360
-//    let duration = circumference / MOVEMENT_SPEED_0
-//    let followAction = SKAction.follow(path, duration: duration)
-//    rotation -= angle.radians
-//    let rotateAction = SKAction.rotate(byAngle: -angle.radians, duration: duration)
-////        await self.runAsync(SKAction.group([followAction, rotateAction]))
-//    await self.runAsync(followAction)
-////        await self.runAsync(rotateAction)
-//    
-//}
