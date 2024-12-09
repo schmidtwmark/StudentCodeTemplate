@@ -4,7 +4,7 @@ import SwiftUI
 struct StudentCodeTemplateApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView<TurtleConsole, TurtleConsoleView>()
+            CodeEnvironmentView<TurtleConsole, TurtleConsoleView>()
         }
     }
 }

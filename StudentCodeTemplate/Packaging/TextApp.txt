@@ -4,7 +4,7 @@
 struct StudentCodeTemplateApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView<TextConsole, TextConsoleView>()
+            CodeEnvironmentView<TextConsole, TextConsoleView>()
         }
     }
 }

@@ -11,8 +11,8 @@ import SwiftUI
 struct StudentCodeTemplateApp: App {
     var body: some Scene {
         WindowGroup {
-//            ContentView<TextConsole, TextConsoleView>()
-            ContentView<TurtleConsole, TurtleConsoleView>()
+//            CodeEnvironmentView<TextConsole, TextConsoleView>()
+            CodeEnvironmentView<TurtleConsole, TurtleConsoleView>()
         }
     }
 }

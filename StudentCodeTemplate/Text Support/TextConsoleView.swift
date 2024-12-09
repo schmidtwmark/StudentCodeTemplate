@@ -51,5 +51,5 @@ struct TextConsoleView: ConsoleView {
 }
 
 #Preview {
-    ContentView<TextConsole, TextConsoleView>()
+    CodeEnvironmentView<TextConsole, TextConsoleView>()
 }

@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  CodeEnvironmentView.swift
 //  StudentCodeTemplate
 //
 //  Created by Mark Schmidt on 11/14/24.
@@ -11,14 +11,14 @@ import Combine
 
 let CORNER_RADIUS = 8.0
 
-struct ContentView<C: Console, CV: ConsoleView>: View {
+struct CodeEnvironmentView<C: Console, CV: ConsoleView>: View {
     
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
-        InnerContentView<C, CV>(colorScheme: colorScheme)
+        InnerCodeEnvironmentView<C, CV>(colorScheme: colorScheme)
     }
 }
-struct InnerContentView<C: Console, CV: ConsoleView>: View {
+struct InnerCodeEnvironmentView<C: Console, CV: ConsoleView>: View {
     
     @StateObject var console: C
     init(colorScheme: ColorScheme) {
@@ -49,7 +49,6 @@ struct InnerContentView<C: Console, CV: ConsoleView>: View {
                     .background(console.state.color)
                     .clipShape(.rect(cornerRadius: CORNER_RADIUS))
                 }
-                Spacer()
             }
             Divider()
             CV(console: console)
