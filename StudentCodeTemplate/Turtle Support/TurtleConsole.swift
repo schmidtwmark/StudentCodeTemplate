@@ -28,7 +28,7 @@ class Turtle: SKSpriteNode {
     
     init(console: TurtleConsole) {
         self.console = console
-        let texture = SKTexture(imageNamed: "arrow")
+        let texture = SKTexture(imageNamed: "Support Code/arrow")
         super.init(texture: texture, color: .green, size: CGSize(width: 32.0, height: 32.0))
         self.colorBlendFactor = 1.0
         self.zPosition = 1

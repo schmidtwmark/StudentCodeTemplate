@@ -3,11 +3,11 @@
 # Default values for variables
 TYPE=""
 MAIN=""
-OUTPUT_DIR="Swift Coding Environment.swiftpm"
+NAME=""
 
 # Function to show usage instructions
 usage() {
-  echo "Usage: $0 --type <turtle|text> [--main <main_file>]"
+  echo "Usage: $0 --type <turtle|text> [--main <main_file> --name <package_name>]"
   exit 1
 }
 
@@ -20,6 +20,10 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --main)
       MAIN=$2
+      shift 2
+      ;;
+    --name)
+      NAME=$2
       shift 2
       ;;
     *)
@@ -40,14 +44,18 @@ if [[ "$TYPE" != "turtle" && "$TYPE" != "text" ]]; then
   usage
 fi
 
+if [[ "$NAME" == "" ]]; then
+    NAME="Swift Coding Environment"
+fi
+
+OUTPUT_DIR="$NAME.swiftpm"
 # Create the output directory
 mkdir -p "$OUTPUT_DIR/Support Code"
 
 # Copy necessary files
 cp -r "Support Code/"* "$OUTPUT_DIR/Support Code/"
-cp "Packaging/Package.txt" "$OUTPUT_DIR/Package.swift"
+sed "s/{{PACKAGE_NAME}}/$NAME/g" "Packaging/Package.txt" > "$OUTPUT_DIR/Package.swift"
 cp "Packaging/ResolvedPackage.txt" "$OUTPUT_DIR/Package.resolved"
-cp "arrow.png" "$OUTPUT_DIR/Support Code/"
 
 # Handle the type-specific files
 if [ "$TYPE" == "turtle" ]; then
